@@ -14,7 +14,24 @@ class ImageTransformer:
         """保存调试图像"""
         os.makedirs(self.debug_dir, exist_ok=True)
         cv2.imwrite(os.path.join(self.debug_dir, name), image)
+    def has_only_one_photo(self, image):
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+        edged = cv2.Canny(blurred, 50, 150)
 
+        contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        photo_like_contours = []
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if area < 10000:  # 可调参数：排除噪点和小图
+                continue
+            epsilon = 0.02 * cv2.arcLength(cnt, True)
+            approx = cv2.approxPolyDP(cnt, epsilon, True)
+            if len(approx) == 4:  # 近似为四边形
+                photo_like_contours.append(cnt)
+
+        return len(photo_like_contours) == 1
     def detect_photos(self, image):
         """检测并分割出每一张老照片"""
         # 保存原图用于调试
@@ -174,6 +191,13 @@ class ImageTransformer:
         # 获取输入文件名（不含扩展名）
         base_name = os.path.splitext(os.path.basename(input_path))[0]
         
+        # 新增：如果只有一张照片，直接输出原图
+        if self.has_only_one_photo(image):
+            output_path = os.path.join(output_dir, f"{base_name}_original.jpg")
+            cv2.imwrite(output_path, image)
+            print(f"仅检测到一张完整照片，已直接输出原图: {output_path}")
+            return 1
+        
         # 检测照片
         photo_corners = self.detect_photos(image)
         
@@ -215,11 +239,11 @@ def main():
     transformer = ImageTransformer()
     
     # Process the image
-    # image_file = './input/multiple.png'
-    # num_photos = transformer.process_image(image_file, 'output')
-    # print(f"Processed {num_photos} photos from {image_file}")
+    image_file = './input/007_6.jpg'
+    num_photos = transformer.process_image(image_file, 'output')
+    print(f"Processed {num_photos} photos from {image_file}")
 
-    # return
+    return
     # Set the input and output paths
     input_dir = "./input"  # Change this to your input directory
     output_dir = "output"  # This is the output directory

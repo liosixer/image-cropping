@@ -1,0 +1,20 @@
+# Ignore input, output, debug directories
+/input/
+/output/
+/debug/
+
+# Optional: Ignore Python cache and pyc files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Optional: Ignore IDE-specific files (e.g., VS Code, PyCharm)
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Optional: Ignore environment directory
+/venv/
+/env/
